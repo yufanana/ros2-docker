@@ -2,7 +2,7 @@
 ARG ROS_DISTRO=humble
 
 ###############################################################################################
-# Base Image for #
+# Base Image #
 ###############################################################################################
 
 FROM osrf/ros:${ROS_DISTRO}-desktop-full AS base
@@ -39,6 +39,7 @@ RUN apt update && \
 
 
 # Install some 'standard' ROS packages and utilities.
+# Uncomment as needed.
 RUN apt update \
   && apt install -y --no-install-recommends \
   python3-rosdep \
@@ -73,7 +74,6 @@ RUN apt update \
   # ros-${ROS_DISTRO}-xacro \
   && apt clean
 
-
   # ros-${ROS_DISTRO}-gazebo-ros-control \
   # ros-${ROS_DISTRO}-hector-gazebo-plugins \
   # ros-${ROS_DISTRO}-joint-state-controller \
@@ -84,18 +84,18 @@ RUN apt update \
   # ros-${ROS_DISTRO}-rqt-robot-plugins \
   # ros-${ROS_DISTRO}-rviz \
 
-# Install additional Python modules
-#RUN pip3 install matplotlib transforms3d
+# # Install additional Python modules
+# RUN pip3 install matplotlib transforms3d
 
-# Install CUDA Toolkit
-RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
-RUN dpkg -i cuda-keyring_1.1-1_all.deb
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    cuda-toolkit-12.2 \
-    nvidia-gds \
-    && rm -rf /var/lib/apt/lists/*
-ENV PATH="/usr/local/cuda-12.2/bin:${PATH}"
-ENV LD_LIBRARY_PATH="/usr/local/cuda-12.2/lib64:${LD_LIBRARY_PATH}"
+# # Install CUDA Toolkit
+# RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+# RUN dpkg -i cuda-keyring_1.1-1_all.deb
+# RUN apt-get update && apt-get install -y --no-install-recommends \
+#     cuda-toolkit-12.2 \
+#     nvidia-gds \
+#     && rm -rf /var/lib/apt/lists/*
+# ENV PATH="/usr/local/cuda-12.2/bin:${PATH}"
+# ENV LD_LIBRARY_PATH="/usr/local/cuda-12.2/lib64:${LD_LIBRARY_PATH}"
 
 # Use Cyclone DDS as middleware
 # RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -143,7 +143,7 @@ ENTRYPOINT [ "/entrypoint.sh" ]
 FROM overlay AS dev
 
 # Dev container arguments
-ARG USERNAME=devuser
+ARG USERNAME=${devuser}
 ARG UID=1000
 ARG GID=${UID}
 
@@ -161,7 +161,6 @@ RUN groupadd --gid $GID $USERNAME \
 
 # Set the ownership of the overlay workspace to the new user
 RUN chown -R ${UID}:${GID} /overlay_ws/
-
 
 # Set the user and source entrypoint in the user's .bashrc file
 USER ${USERNAME}

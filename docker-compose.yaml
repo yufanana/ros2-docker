@@ -1,13 +1,24 @@
-version: "3.9"
+# Usage:
+#   
+# To build the images:
+#   docker compose build
+# 
+# To start up a specific service:
+#   docker compose up -d <service_name>
+#
+# To open an interactive shell in a running container:
+#   docker exec -it <container_name> bash
+
 services:
   # Base image containing dependencies.
   base:
+    container_name: ${PROJECT_NAME}-base
     image: ${PROJECT_NAME}:base
     build:
       context: .
       dockerfile: ./docker/Dockerfile
       args:
-        ROS_DISTRO: humble
+        ROS_DISTRO: ${ROS_DISTRO:?}
       target: base
     # Interactive shell
     stdin_open: true
@@ -16,7 +27,7 @@ services:
     network_mode: host
     ipc: host
     # Needed to display graphical applications
-    # privileged: True
+    privileged: True
     # runtime: nvidia
     environment:
       # Allows graphical programs in the container.
@@ -27,7 +38,7 @@ services:
       # Allows graphical programs in the container.
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - ${XAUTHORITY:-$HOME/.Xauthority}:/root/.Xauthority
-    # deploy:
+    # deploy: # swarm mode
     #   resources:
     #     reservations:
     #       devices:
@@ -37,6 +48,7 @@ services:
 
   # Overlay image containing the example source code.
   overlay:
+    container_name: ${PROJECT_NAME}-overlay
     extends: base
     image: ${PROJECT_NAME}:overlay
     build:
@@ -46,6 +58,7 @@ services:
 
   # Developer container
   dev:
+    container_name: ${PROJECT_NAME}-dev
     extends: overlay
     image: ${PROJECT_NAME}:dev
     build:
@@ -59,8 +72,11 @@ services:
 
     volumes:
       # Mount the source code
-      - ./src:/overlay_ws/src/:rw 
-
+      - ./src:/overlay_ws/src/:rw
+      # Mount colcon build artifacts for faster rebuilds
+      - ./.colcon/build/:/overlay_ws/build/:rw
+      - ./.colcon/install/:/overlay_ws/install/:rw
+      - ./.colcon/log/:/overlay_ws/log/:rw
     user: ${USERNAME:-devuser}
     command: bash -c "sudo chmod 777 -R /overlay_ws/ && exec sleep infinity"
   
